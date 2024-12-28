@@ -1,9 +1,12 @@
-name: Generate Release Notes and Upload
+name: Generate Release Notes and Upload to Azure Blob Storage
 
 on:
   push:
     branches:
       - pre-release
+
+permissions:
+  contents: write
 
 jobs:
   release:
