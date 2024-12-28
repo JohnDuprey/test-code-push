@@ -1,0 +1,69 @@
+name: Generate Release Notes and Upload
+
+on:
+  push:
+    branches:
+      - pre-release
+
+jobs:
+  release:
+    name: Generate Release Notes and Upload to Azure
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Read and Trim Version
+      - name: Read and Trim Version
+        id: get_version
+        run: |
+          if [ ! -f version_latest.txt ]; then
+            echo "Error: version_latest.txt not found!"
+            exit 1
+          fi
+          VERSION=$(cat version_latest.txt | tr -d '[:space:]')
+          if [ -z "$VERSION" ]; then
+            echo "Error: version_latest.txt is empty after trimming!"
+            exit 1
+          fi
+          echo "VERSION=$VERSION"
+          echo "version=$VERSION" >> $GITHUB_ENV
+
+      # Generate Release Notes
+      - name: Generate Release Notes
+        id: changelog
+        uses: mikepenz/release-changelog-builder-action@v5.0.0
+        with:
+          configuration: .github/release-changelog-config.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Create a new release tag
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ env.VERSION }}
+          release_name: "v${{ env.VERSION }}"
+          draft: false
+          prerelease: true
+          body: ${{ steps.changelog.outputs.changelog }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Create ZIP File in a New Source Directory
+      - name: Prepare and Zip Release Files
+        run: |
+          mkdir -p src/releases
+          zip -r src/releases/release_${{ env.VERSION }}.zip . --exclude "./src/releases/*"
+
+      # Upload to Azure Blob Storage
+      - name: Azure Blob Upload with Destination folder defined
+        uses: LanceMcCarthy/Action-AzureBlobUpload@v2
+        with:
+          connection_string: ${{ secrets.AZURE_CONNECTION_STRING }}
+          container_name: test-container
+          source_folder: src/releases/
+          destination_folder: /releases/
+          delete_if_exists: true
