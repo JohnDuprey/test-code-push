@@ -28,8 +28,7 @@ jobs:
             echo "Error: version_latest.txt is empty after trimming!"
             exit 1
           fi
-          echo "VERSION=$VERSION"
-          echo "version=$VERSION" >> $GITHUB_ENV
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       # Generate Release Notes
       - name: Generate Release Notes
@@ -44,8 +43,8 @@ jobs:
       - name: Create GitHub Release
         uses: actions/create-release@v1
         with:
-          tag_name: ${{ env.VERSION }}
-          release_name: "v${{ env.VERSION }}"
+          tag_name: ${{ steps.get_version.outputs.version }}
+          release_name: "v${{ steps.get_version.outputs.version }}"
           draft: false
           prerelease: true
           body: ${{ steps.changelog.outputs.changelog }}
@@ -56,7 +55,7 @@ jobs:
       - name: Prepare and Zip Release Files
         run: |
           mkdir -p src/releases
-          zip -r src/releases/release_${{ env.VERSION }}.zip . --exclude "./src/releases/*"
+          zip -r src/releases/release_${{ steps.get_version.outputs.version }}.zip . --exclude "./src/releases/*"
 
       # Upload to Azure Blob Storage
       - name: Azure Blob Upload with Destination folder defined
