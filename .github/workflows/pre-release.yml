@@ -74,6 +74,10 @@ jobs:
             --exclude "./src/releases/*" \
             --exclude ".*" \
             --exclude ".*/**"
+          zip -r src/releases/prerelease.zip . \
+            --exclude "./src/releases/*" \
+            --exclude ".*" \
+            --exclude ".*/**"
 
       # Upload to Azure Blob Storage
       - name: Azure Blob Upload with Destination folder defined
