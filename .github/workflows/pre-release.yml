@@ -17,6 +17,8 @@ jobs:
       # Checkout the repository
       - name: Checkout Code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Fetch all history to include tags
 
       # Read and Trim Version
       - name: Read and Trim Version
@@ -37,6 +39,7 @@ jobs:
       - name: Check if Tag Exists
         id: tag_check
         run: |
+          git fetch --tags
           if git rev-parse "refs/tags/${{ steps.get_version.outputs.version }}" >/dev/null 2>&1; then
             echo "Tag ${{ steps.get_version.outputs.version }} already exists. Exiting."
             exit 0
