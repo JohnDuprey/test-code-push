@@ -17,8 +17,6 @@ jobs:
       # Checkout the repository
       - name: Checkout Code
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0 # Fetch all history to include tags
 
       # Read and Trim Version
       - name: Read and Trim Version
@@ -81,7 +79,7 @@ jobs:
 
       # Upload to Azure Blob Storage
       - name: Azure Blob Upload with Destination folder defined
-        uses: LanceMcCarthy/Action-AzureBlobUpload@v2
+        uses: LanceMcCarthy/Action-AzureBlobUpload@v3.3.0
         with:
           connection_string: ${{ secrets.AZURE_CONNECTION_STRING }}
           container_name: test-container
