@@ -39,13 +39,16 @@ jobs:
         run: |
           git fetch --tags
           if git rev-parse "refs/tags/${{ steps.get_version.outputs.version }}" >/dev/null 2>&1; then
-            echo "Tag ${{ steps.get_version.outputs.version }} already exists. Exiting."
-            exit 0
+            echo "tag_exists=true" >> $GITHUB_ENV
+            echo "Tag ${{ steps.get_version.outputs.version }} already exists. Exiting workflow successfully."
+          else
+            echo "tag_exists=false" >> $GITHUB_ENV
           fi
 
       # Generate Release Notes
       - name: Generate Release Notes
         id: changelog
+        if: env.tag_exists == 'false'
         uses: mikepenz/release-changelog-builder-action@v5.0.0
         with:
           configuration: .github/release-changelog-config.yml
@@ -54,6 +57,7 @@ jobs:
 
       # Create a new release tag
       - name: Create GitHub Release
+        if: env.tag_exists == 'false'
         uses: ncipollo/release-action@v1.14.0
         with:
           tag: ${{ steps.get_version.outputs.version }}
@@ -66,6 +70,7 @@ jobs:
 
       # Create ZIP File in a New Source Directory
       - name: Prepare and Zip Release Files
+        if: env.tag_exists == 'false'
         run: |
           mkdir -p src/releases
           zip -r src/releases/release_${{ steps.get_version.outputs.version }}.zip . \
@@ -79,6 +84,7 @@ jobs:
 
       # Upload to Azure Blob Storage
       - name: Azure Blob Upload with Destination folder defined
+        if: env.tag_exists == 'false'
         uses: LanceMcCarthy/Action-AzureBlobUpload@v3.3.0
         with:
           connection_string: ${{ secrets.AZURE_CONNECTION_STRING }}
